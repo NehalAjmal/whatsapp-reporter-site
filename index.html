@@ -1494,14 +1494,29 @@ footer p {
     <div class="payment-instructions">
       <ol>
         <li>Complete the ₹1,999 payment using the QR code or button.</li>
-        <li>Take a screenshot of the payment success screen.</li>
-        <li>Click below to send the screenshot on WhatsApp to instantly receive your ZIP download link.</li>
+        <li>Note down the 12-digit UPI Ref No. / UTR from your payment app.</li>
+        <li>Enter your details below to request your instant download link.</li>
       </ol>
     </div>
 
-    <a href="" target="_blank" class="confirm-payment-btn" id="confirmPaymentBtn">
-      💬 Send Screenshot on WhatsApp
-    </a>
+    <form id="utrForm" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label for="buyerEmail">Email Address</label>
+        <input type="email" id="buyerEmail" required placeholder="where should we send the files?">
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label for="buyerUtr">12-Digit UTR / Transaction ID</label>
+        <input type="text" id="buyerUtr" required pattern="\d{12}" title="Please enter exactly 12 digits" placeholder="e.g. 6159xxxxxxxx">
+      </div>
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-size: 0.95rem; padding: 14px;">
+        Request Download Link
+      </button>
+    </form>
+
+    <div id="paymentSuccessMsg" style="display: none; background: rgba(37, 211, 102, 0.1); border: 1px solid var(--green-400); padding: 16px; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-primary); text-align: center;">
+      🎉 <strong>Request Submitted!</strong><br>
+      We are verifying UTR <span id="displayUtr" style="color: var(--green-400); font-weight: 700;"></span>. Your download link will be emailed to <span id="displayEmail" style="color: var(--green-400); font-weight: 700;"></span> within 10 minutes.
+    </div>
   </div>
 </div>
 
@@ -1596,17 +1611,9 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
            '&tn=' + encodeURIComponent(productName);
   }
 
-  function getWhatsAppLink(upiId) {
-    var text = "Hi, I have completed the ₹1,999 payment for WhatsApp Client Reporter to " + upiId + ".\n\nHere is my payment screenshot. Please send me the download link.";
-    return 'https://wa.me/919250615962?text=' + encodeURIComponent(text);
-  }
-
   function updatePaymentDetails() {
     var upiLink = getUpiLink(selectedUpi);
-    var waLink = getWhatsAppLink(selectedUpi);
-
     mobileBtn.href = upiLink;
-    confirmBtn.href = waLink;
 
     /* Render QR Code */
     qrcodeContainer.innerHTML = '';
@@ -1647,6 +1654,39 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
       selectedUpi = this.getAttribute('data-upi');
       updatePaymentDetails();
     });
+  });
+
+  /* UTR Form Submission */
+  var utrForm = document.getElementById('utrForm');
+  var successMsg = document.getElementById('paymentSuccessMsg');
+
+  utrForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var email = document.getElementById('buyerEmail').value;
+    var utr = document.getElementById('buyerUtr').value;
+
+    document.getElementById('displayUtr').innerText = utr;
+    document.getElementById('displayEmail').innerText = email;
+
+    utrForm.style.display = 'none';
+    successMsg.style.display = 'block';
+
+    // Optional Webhook Submission (e.g. Google Sheet script Web App)
+    var webhookUrl = ''; // You can paste your Google Apps Script URL here
+    if (webhookUrl) {
+      fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, utr: utr, upi: selectedUpi, amount: amount, date: new Date().toISOString() })
+      });
+    }
+
+    // Automatically open WhatsApp with details prefilled after 2 seconds
+    setTimeout(function() {
+      var waText = "Hi, I have requested verification for my payment of ₹1,999 for WhatsApp Client Reporter.\n\nUTR: " + utr + "\nEmail: " + email;
+      window.open('https://wa.me/919250615962?text=' + encodeURIComponent(waText), '_blank');
+    }, 2000);
   });
 })();
 </script>
