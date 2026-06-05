@@ -1472,47 +1472,42 @@ footer p {
 
 <!-- ============ UPI PAYMENT MODAL ============ -->
 <div class="modal-overlay" id="paymentModal">
-  <div class="modal-content">
+  <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
     <button class="modal-close" id="modalClose" aria-label="Close modal">&times;</button>
     <h2 class="modal-title">Secure UPI Payment</h2>
-    <p class="modal-subtitle">Pay ₹1,999 directly to bypass platform fees &amp; get instant access.</p>
-    
-    <div class="upi-id-select">
-      <button class="upi-chip active" data-upi="933658933@ybl">UPI ID 1<br><span style="font-size: 0.75rem; opacity: 0.8;">933658933@ybl</span></button>
-      <button class="upi-chip" data-upi="9250615962@ybl">UPI ID 2<br><span style="font-size: 0.75rem; opacity: 0.8;">9250615962@ybl</span></button>
-    </div>
+    <p class="modal-subtitle" style="margin-bottom: 16px;">Pay ₹1,999 to <strong style="color: var(--green-400);">9250615962@ybl</strong> to bypass platform fees &amp; get instant access.</p>
 
     <!-- Mobile Pay Button -->
     <a href="" class="mobile-pay-btn" id="mobilePayBtn">Pay via UPI App</a>
 
     <!-- QR Code Container (Desktop) -->
-    <div class="qr-container">
+    <div class="qr-container" style="margin-bottom: 16px; padding: 12px; border-radius: 8px;">
       <div id="qrcode"></div>
-      <div class="qr-caption">Scan with Google Pay, PhonePe, Paytm, or BHIM</div>
+      <div class="qr-caption" style="margin-top: 8px; font-size: 0.75rem;">Scan with Google Pay, PhonePe, Paytm, or BHIM</div>
     </div>
 
-    <div class="payment-instructions">
-      <ol>
-        <li>Complete the ₹1,999 payment using the QR code or button.</li>
-        <li>Note down the 12-digit UPI Ref No. / UTR from your payment app.</li>
-        <li>Enter your details below to request your instant download link.</li>
+    <div class="payment-instructions" style="padding: 12px; margin-bottom: 16px; font-size: 0.8rem;">
+      <ol style="padding-left: 16px;">
+        <li style="margin-bottom: 4px;">Complete the ₹1,999 payment using the QR code or button.</li>
+        <li style="margin-bottom: 4px;">Copy the 12-digit UPI Ref No. / UTR from your payment app.</li>
+        <li style="margin-bottom: 0;">Enter your details below to request your instant download link.</li>
       </ol>
     </div>
 
-    <form id="utrForm" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-      <div class="form-group" style="margin-bottom: 0;">
-        <label for="buyerName">Full Name</label>
-        <input type="text" id="buyerName" required placeholder="your full name">
+    <form id="utrForm" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; width: 100%;">
+      <div style="display: flex; flex-direction: column; align-items: flex-start; width: 100%; gap: 6px;">
+        <label for="buyerName" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Full Name</label>
+        <input type="text" id="buyerName" required placeholder="Your full name" style="display: block; width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
       </div>
-      <div class="form-group" style="margin-bottom: 0;">
-        <label for="buyerEmail">Email Address</label>
-        <input type="email" id="buyerEmail" required placeholder="where should we send the files?">
+      <div style="display: flex; flex-direction: column; align-items: flex-start; width: 100%; gap: 6px;">
+        <label for="buyerEmail" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Email Address</label>
+        <input type="email" id="buyerEmail" required placeholder="Where should we send the files?" style="display: block; width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
       </div>
-      <div class="form-group" style="margin-bottom: 0;">
-        <label for="buyerUtr">12-Digit UTR / Transaction ID</label>
-        <input type="text" id="buyerUtr" required pattern="\d{12}" title="Please enter exactly 12 digits" placeholder="e.g. 6159xxxxxxxx">
+      <div style="display: flex; flex-direction: column; align-items: flex-start; width: 100%; gap: 6px;">
+        <label for="buyerUtr" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">12-Digit UTR / Transaction ID</label>
+        <input type="text" id="buyerUtr" required pattern="\d{12}" title="Please enter exactly 12 digits" placeholder="e.g. 6159xxxxxxxx" style="display: block; width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
       </div>
-      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-size: 0.95rem; padding: 14px;">
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-size: 1rem; padding: 16px; cursor: pointer; border: none; border-radius: var(--radius-sm); font-weight: 700;">
         Request Download Link
       </button>
     </form>
@@ -1597,13 +1592,11 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
   var modal = document.getElementById('paymentModal');
   var closeBtn = document.getElementById('modalClose');
   var triggers = document.querySelectorAll('.buy-trigger-btn');
-  var chips = document.querySelectorAll('.upi-chip');
   var mobileBtn = document.getElementById('mobilePayBtn');
-  var confirmBtn = document.getElementById('confirmPaymentBtn');
   var qrcodeContainer = document.getElementById('qrcode');
   var qrcodeObj = null;
 
-  var selectedUpi = '933658933@ybl';
+  var selectedUpi = '9250615962@ybl';
   var amount = '1999';
   var productName = 'WhatsApp Client Reporter';
 
@@ -1648,16 +1641,6 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
     if (e.target === modal) {
       modal.classList.remove('open');
     }
-  });
-
-  /* Handle UPI Chip Selection */
-  chips.forEach(function(chip) {
-    chip.addEventListener('click', function() {
-      chips.forEach(function(c) { c.classList.remove('active'); });
-      this.classList.add('active');
-      selectedUpi = this.getAttribute('data-upi');
-      updatePaymentDetails();
-    });
   });
 
   /* UTR Form Submission */
