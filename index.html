@@ -1501,6 +1501,10 @@ footer p {
 
     <form id="utrForm" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
       <div class="form-group" style="margin-bottom: 0;">
+        <label for="buyerName">Full Name</label>
+        <input type="text" id="buyerName" required placeholder="your full name">
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
         <label for="buyerEmail">Email Address</label>
         <input type="email" id="buyerEmail" required placeholder="where should we send the files?">
       </div>
@@ -1662,6 +1666,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
 
   utrForm.addEventListener('submit', function(e) {
     e.preventDefault();
+    var name = document.getElementById('buyerName').value;
     var email = document.getElementById('buyerEmail').value;
     var utr = document.getElementById('buyerUtr').value;
 
@@ -1678,13 +1683,13 @@ document.querySelectorAll('a[href^="#"]').forEach(function(a) {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, utr: utr, upi: selectedUpi, amount: amount, date: new Date().toISOString() })
+        body: JSON.stringify({ name: name, email: email, utr: utr, upi: selectedUpi, amount: amount, date: new Date().toISOString() })
       });
     }
 
     // Automatically open WhatsApp with details prefilled after 2 seconds
     setTimeout(function() {
-      var waText = "Hi, I have requested verification for my payment of ₹1,999 for WhatsApp Client Reporter.\n\nUTR: " + utr + "\nEmail: " + email;
+      var waText = "Hi, I have requested verification for my payment of ₹1,999 for WhatsApp Client Reporter.\n\nName: " + name + "\nUTR: " + utr + "\nEmail: " + email;
       window.open('https://wa.me/919250615962?text=' + encodeURIComponent(waText), '_blank');
     }, 2000);
   });
