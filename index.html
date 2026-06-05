@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Client Reporter — Automate Client Reporting in One Command</title>
+<meta name="description" content="Pull Google Analytics data, generate branded PDF reports, and send them to clients on WhatsApp — every week, automatically. One-time purchase, zero monthly fees.">
+<style>
+/* =========================================
+   DESIGN SYSTEM
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --green-400: #25D366;
+  --green-500: #1fba59;
+  --green-600: #128C3E;
+  --green-glow: rgba(37, 211, 102, 0.25);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --max-w: 1120px;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0a0f1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2235;
+  --bg-card-hover: #1f2a40;
+  --bg-elevated: #232f45;
+  --text-primary: #f0f4f8;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: rgba(148, 163, 184, 0.1);
+  --border-hover: rgba(148, 163, 184, 0.2);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 60px rgba(37,211,102,0.12);
+  --code-bg: #0d1117;
+  --code-text: #7ee787;
+  --hero-gradient: linear-gradient(180deg, #0a0f1a 0%, #0f1729 50%, #0a0f1a 100%);
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-elevated: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-hover: rgba(15, 23, 42, 0.15);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.06);
+  --shadow-glow: 0 0 60px rgba(37,211,102,0.08);
+  --code-bg: #f1f5f9;
+  --code-text: #128C3E;
+  --hero-gradient: linear-gradient(180deg, #f8fafc 0%, #eff6ff 50%, #f8fafc 100%);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.7;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* =========================================
+   THEME TOGGLE
+   ========================================= */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all var(--transition);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+}
+.theme-toggle:hover {
+  border-color: var(--green-400);
+  transform: scale(1.1);
+}
+[data-theme="dark"] .theme-toggle .icon-light { display: inline; }
+[data-theme="dark"] .theme-toggle .icon-dark { display: none; }
+[data-theme="light"] .theme-toggle .icon-light { display: none; }
+[data-theme="light"] .theme-toggle .icon-dark { display: inline; }
+
+/* =========================================
+   LAYOUT
+   ========================================= */
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+section { padding: 80px 0; }
+
+/* =========================================
+   HERO SECTION
+   ========================================= */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background: var(--hero-gradient);
+  position: relative;
+  overflow: hidden;
+  padding: 120px 0 80px;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+  top: -200px;
+  right: -100px;
+  animation: pulse-glow 4s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% { opacity: 0.4; transform: scale(1); }
+  100% { opacity: 0.7; transform: scale(1.15); }
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: rgba(37, 211, 102, 0.1);
+  border: 1px solid rgba(37, 211, 102, 0.25);
+  color: var(--green-400);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green-400);
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+  animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+
+.hero h1 .highlight {
+  background: linear-gradient(135deg, var(--green-400), #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-secondary);
+  max-width: 520px;
+  margin-bottom: 36px;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.hero-cta-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 36px;
+  background: linear-gradient(135deg, var(--green-400), var(--green-500));
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  box-shadow: 0 4px 20px var(--green-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.btn-primary:hover::after { transform: translateX(100%); }
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px var(--green-glow);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  border-color: var(--green-400);
+  color: var(--green-400);
+  background: rgba(37, 211, 102, 0.05);
+}
+
+/* =========================================
+   HERO IMAGE
+   ========================================= */
+.hero-visual {
+  position: relative;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+.hero-image-wrapper {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-glow), var(--shadow-card);
+  transition: transform var(--transition);
+}
+
+.hero-image-wrapper:hover { transform: scale(1.02); }
+
+.hero-image-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 32px;
+  margin-top: 24px;
+  animation: fadeInUp 0.6s ease-out 0.5s both;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--green-400);
+}
+
+.hero-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* =========================================
+   TERMINAL / CODE BLOCK
+   ========================================= */
+.terminal {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin: 40px 0;
+  box-shadow: var(--shadow-card);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.terminal-dot:nth-child(1) { background: #ff5f56; }
+.terminal-dot:nth-child(2) { background: #ffbd2e; }
+.terminal-dot:nth-child(3) { background: #27c93f; }
+
+.terminal-title {
+  margin-left: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.terminal-body {
+  padding: 20px 24px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  overflow-x: auto;
+}
+
+.terminal-body .prompt { color: var(--green-400); font-weight: 600; }
+.terminal-body .cmd { color: var(--text-primary); }
+.terminal-body .output { color: var(--text-muted); }
+.terminal-body .success { color: var(--green-400); }
+.terminal-body .dim { color: var(--text-muted); opacity: 0.6; }
+
+/* =========================================
+   SECTION HEADERS
+   ========================================= */
+.section-header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 56px;
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-400);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.section-header h2 {
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.section-header p {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+}
+
+/* =========================================
+   HOW IT WORKS — STEPS
+   ========================================= */
+.steps-section { background: var(--bg-secondary); }
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  position: relative;
+}
+
+.steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 48px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--green-400), transparent);
+  opacity: 0.3;
+}
+
+.step-card {
+  text-align: center;
+  padding: 40px 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all var(--transition);
+  position: relative;
+}
+
+.step-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--green-400);
+  box-shadow: var(--shadow-glow);
+}
+
+.step-number {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-400), var(--green-600));
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.step-icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+}
+
+.step-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.step-card p {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* =========================================
+   FEATURES
+   ========================================= */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.feature-card {
+  padding: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all var(--transition);
+  display: flex;
+  gap: 20px;
+}
+
+.feature-card:hover {
+  border-color: rgba(37, 211, 102, 0.3);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.feature-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-xs);
+  background: rgba(37, 211, 102, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.feature-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* =========================================
+   PRICING / CTA SECTION
+   ========================================= */
+.pricing-section {
+  background: var(--bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.pricing-section::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+  bottom: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.5;
+}
+
+.pricing-card {
+  max-width: 560px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 2px solid rgba(37, 211, 102, 0.3);
+  border-radius: 24px;
+  padding: 48px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--shadow-glow), var(--shadow-card);
+}
+
+.pricing-popular {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 24px;
+  background: linear-gradient(135deg, var(--green-400), var(--green-500));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.pricing-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+
+.pricing-desc {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+}
+
+.pricing-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.pricing-currency {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.pricing-value {
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--green-400), #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pricing-period {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.pricing-features {
+  list-style: none;
+  text-align: left;
+  margin-bottom: 36px;
+}
+
+.pricing-features li {
+  padding: 10px 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pricing-features li:last-child { border-bottom: none; }
+
+.pricing-features li::before {
+  content: '✓';
+  color: var(--green-400);
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.pricing-buy {
+  width: 100%;
+  padding: 18px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border: none;
+}
+
+.pricing-note {
+  margin-top: 16px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* =========================================
+   FAQ SECTION
+   ========================================= */
+.faq-list {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.faq-item:hover { border-color: var(--border-hover); }
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px 24px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  gap: 16px;
+  transition: color var(--transition);
+}
+
+.faq-question:hover { color: var(--green-400); }
+
+.faq-chevron {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  transition: transform var(--transition);
+}
+
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-item.open .faq-answer { max-height: 300px; }
+
+.faq-answer-inner {
+  padding: 0 24px 20px;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+/* =========================================
+   FOOTER CTA
+   ========================================= */
+.final-cta {
+  text-align: center;
+  padding: 100px 0;
+  position: relative;
+}
+
+.final-cta h2 {
+  font-size: clamp(1.8rem, 4vw, 2.75rem);
+  font-weight: 900;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.final-cta p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  max-width: 480px;
+  margin: 0 auto 36px;
+}
+
+/* =========================================
+   FOOTER
+   ========================================= */
+footer {
+  padding: 32px 0;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+footer p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* =========================================
+   SCROLL ANIMATIONS
+   ========================================= */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================================
+   UPI PAYMENT MODAL
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 16px;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  padding: 32px;
+  position: relative;
+  transform: translateY(24px);
+  transition: transform 0.3s ease;
+  box-shadow: var(--shadow-card);
+}
+
+.modal-overlay.open .modal-content {
+  transform: translateY(0);
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.modal-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.upi-id-select {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.upi-chip {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+}
+
+.upi-chip.active {
+  border-color: var(--green-400);
+  background: rgba(37, 211, 102, 0.08);
+  color: var(--text-primary);
+}
+
+.qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.qr-caption {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.mobile-pay-btn {
+  display: none;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--green-400), var(--green-500));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 16px;
+  text-align: center;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-pay-btn {
+    display: block;
+  }
+  .qr-container {
+    display: none;
+  }
+}
+
+.payment-instructions {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.payment-instructions ol {
+  padding-left: 20px;
+}
+
+.payment-instructions li {
+  margin-bottom: 8px;
+}
+
+.payment-instructions li:last-child {
+  margin-bottom: 0;
+}
+
+.confirm-payment-btn {
+  width: 100%;
+  padding: 16px;
+  background: #1f2c34;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.confirm-payment-btn:hover {
+  background: var(--green-600);
+  border-color: var(--green-400);
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero { padding: 100px 0 60px; min-height: auto; }
+  .hero-visual { order: -1; }
+  .steps-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+  .steps-grid::before { display: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  section { padding: 60px 0; }
+  .hero-stats { gap: 24px; }
+  .pricing-card { padding: 32px 24px; }
+}
+
+@media (max-width: 480px) {
+  .hero-cta-group { flex-direction: column; width: 100%; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+  .hero-stats { flex-wrap: wrap; }
+  .pricing-value { font-size: 3rem; }
+}
+
+/* =========================================
+   TRUST BADGES
+   ========================================= */
+.trust-bar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: 48px 0 0;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.trust-icon {
+  font-size: 1.25rem;
+}
+
+/* =========================================
+   WHATSAPP MOCKUP
+   ========================================= */
+.wa-mockup {
+  background: #0b141a;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+  max-width: 360px;
+  margin: 40px auto 0;
+}
+
+.wa-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #1f2c34;
+}
+
+.wa-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-400), var(--green-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.wa-contact-name {
+  color: #e9edef;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.wa-contact-status {
+  color: #8696a0;
+  font-size: 12px;
+}
+
+.wa-body {
+  padding: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  min-height: 160px;
+}
+
+.wa-bubble {
+  background: #005c4b;
+  border-radius: 8px 8px 0 8px;
+  padding: 8px 12px;
+  max-width: 85%;
+  margin-left: auto;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.wa-bubble-doc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+}
+
+.wa-doc-icon {
+  color: #ef4444;
+  font-size: 1.5rem;
+}
+
+.wa-doc-info {
+  flex: 1;
+}
+
+.wa-doc-name {
+  color: #e9edef;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.wa-doc-meta {
+  color: #8696a0;
+  font-size: 11px;
+}
+
+.wa-bubble-text {
+  color: #e9edef;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wa-time {
+  text-align: right;
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.wa-ticks { color: #53bdeb; }
+
+.wa-auto-label {
+  background: rgba(37, 211, 102, 0.15);
+  border: 1px solid rgba(37, 211, 102, 0.3);
+  border-radius: 6px;
+  padding: 6px 10px;
+  max-width: 85%;
+  margin-left: auto;
+  text-align: center;
+}
+
+.wa-auto-label span {
+  color: var(--green-400);
+  font-size: 11px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark mode">
+  <span class="icon-light">☀️</span>
+  <span class="icon-dark">🌙</span>
+</button>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge">Python Script — Runs Locally</div>
+        <h1>
+          Automate Client<br>
+          Reports on<br>
+          <span class="highlight">WhatsApp</span>
+        </h1>
+        <p class="hero-subtitle">
+          Pull Google Analytics data, generate branded PDF reports, and deliver them to every client's WhatsApp — all with a single command.
+        </p>
+        <div class="hero-cta-group">
+          <button class="btn-primary buy-trigger-btn">
+            <span>Get It Now</span>
+            <span>→</span>
+          </button>
+          <a class="btn-secondary" href="#how-it-works">
+            See How It Works ↓
+          </a>
+        </div>
+        <div class="trust-bar">
+          <div class="trust-item">
+            <span class="trust-icon">🔒</span>
+            <span>One-Time Purchase</span>
+          </div>
+          <div class="trust-item">
+            <span class="trust-icon">🖥️</span>
+            <span>Runs on Your Machine</span>
+          </div>
+          <div class="trust-item">
+            <span class="trust-icon">📦</span>
+            <span>Instant Download</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-image-wrapper">
+          <img src="./cover.png" alt="WhatsApp Client Reporter — product overview showing analytics to WhatsApp workflow" width="1005" height="565" loading="eager">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEMO TERMINAL ============ -->
+<section id="demo">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">⚡ One Command</div>
+      <h2>From Analytics to WhatsApp in Under 3 Minutes</h2>
+      <p>No dashboards. No manual exports. Just run the script and your clients get their weekly reports.</p>
+    </div>
+    <div class="terminal reveal" role="img" aria-label="Terminal output showing the script running and sending reports to multiple clients">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-title">Terminal — python main.py</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="prompt">$</span> <span class="cmd">python main.py</span></div>
+        <br>
+        <div><span class="output">Agency: Starter Digital</span></div>
+        <div><span class="output">Clients loaded: 4</span></div>
+        <div><span class="dim">---</span></div>
+        <br>
+        <div><span class="output">[Sharma Electronics]</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Fetching analytics data...</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Report saved: reports/Sharma_Electronics_2026-06-05.pdf</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Sending to WhatsApp (919876543210)...</span></div>
+        <div><span class="success">&nbsp;&nbsp;✓ Sharma Electronics — sent successfully</span></div>
+        <br>
+        <div><span class="output">[Bloom Café]</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Fetching analytics data...</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Report saved: reports/Bloom_Cafe_2026-06-05.pdf</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Sending to WhatsApp (919123456780)...</span></div>
+        <div><span class="success">&nbsp;&nbsp;✓ Bloom Café — sent successfully</span></div>
+        <br>
+        <div><span class="output">[Metro Dental]</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Fetching analytics data...</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Report saved: reports/Metro_Dental_2026-06-05.pdf</span></div>
+        <div><span class="dim">&nbsp;&nbsp;Sending to WhatsApp (919555678901)...</span></div>
+        <div><span class="success">&nbsp;&nbsp;✓ Metro Dental — sent successfully</span></div>
+        <br>
+        <div><span class="dim">========================================</span></div>
+        <div><span class="success">Done. 3/3 sent | 0 failed | 0 errors</span></div>
+      </div>
+    </div>
+
+    <!-- WhatsApp Mockup -->
+    <div class="wa-mockup reveal">
+      <div class="wa-header">
+        <div class="wa-avatar">S</div>
+        <div>
+          <div class="wa-contact-name">Starter Digital</div>
+          <div class="wa-contact-status">WhatsApp Business</div>
+        </div>
+      </div>
+      <div class="wa-body">
+        <div class="wa-bubble">
+          <div class="wa-bubble-doc">
+            <div class="wa-doc-icon">📄</div>
+            <div class="wa-doc-info">
+              <div class="wa-doc-name">Weekly_Report.pdf</div>
+              <div class="wa-doc-meta">Sharma Electronics · Tap to open</div>
+            </div>
+          </div>
+          <div class="wa-time">09:01 <span class="wa-ticks">✓✓</span></div>
+        </div>
+        <div class="wa-auto-label">
+          <span>🤖 Report sent automatically · Every Friday at 9 AM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="steps-section" id="how-it-works">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">📋 How It Works</div>
+      <h2>Three Steps. Zero Monthly Fees.</h2>
+      <p>Set it up once in 15 minutes. Then it just works, every week.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <div class="step-number">1</div>
+        <div class="step-icon">🔗</div>
+        <h3>Connect Google Analytics</h3>
+        <p>Add your service account credentials and each client's GA4 Property ID. One-time setup per client.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">2</div>
+        <div class="step-icon">📊</div>
+        <h3>Configure Clients</h3>
+        <p>List clients, their GA4 IDs, and WhatsApp numbers in a simple YAML file. Add your agency name and logo.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">3</div>
+        <div class="step-icon">🚀</div>
+        <h3>Run &amp; Automate</h3>
+        <p>Run <code style="background:var(--code-bg);padding:2px 8px;border-radius:4px;color:var(--code-text);font-size:0.85em;">python main.py</code> manually or schedule it with cron to send reports every Friday automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">✨ Everything Included</div>
+      <h2>Built for Agencies That Value Their Time</h2>
+      <p>No SaaS subscriptions, no per-client fees. Pay once and own it forever.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">📈</div>
+        <div>
+          <h3>Real Google Analytics Data</h3>
+          <p>Pulls sessions, users, bounce rate, session duration, and top pages directly from the GA4 Data API.</p>
+        </div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📑</div>
+        <div>
+          <h3>Branded PDF Reports</h3>
+          <p>Professional reports with your agency name and logo. Clean design your clients will actually read.</p>
+        </div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">💬</div>
+        <div>
+          <h3>Direct WhatsApp Delivery</h3>
+          <p>Reports arrive in your client's WhatsApp chat — where they actually check messages, not buried in email.</p>
+        </div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">⏱️</div>
+        <div>
+          <h3>Handles 30 Clients in 3 Min</h3>
+          <p>Fetch, generate, and send — all in parallel. Works even on a basic laptop with no cloud servers needed.</p>
+        </div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🔧</div>
+        <div>
+          <h3>No Coding Required</h3>
+          <p>Just edit a YAML config file and run one command. Full step-by-step README and troubleshooting included.</p>
+        </div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🏠</div>
+        <div>
+          <h3>100% Local &amp; Private</h3>
+          <p>Runs on your own laptop. Your clients' data never touches third-party servers. No monthly fees ever.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section class="pricing-section" id="pricing">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">💰 Simple Pricing</div>
+      <h2>One Price. Own It Forever.</h2>
+      <p>No subscriptions, no per-client fees, no hidden costs.</p>
+    </div>
+    <div class="pricing-card reveal">
+      <div class="pricing-popular">Direct UPI Payment</div>
+      <div class="pricing-name">WhatsApp Client Reporter</div>
+      <div class="pricing-desc">Everything you need to automate client reporting.</div>
+      <div class="pricing-amount">
+        <span class="pricing-currency">₹</span>
+        <span class="pricing-value">1,999</span>
+      </div>
+      <div class="pricing-period">One-time payment · Lifetime access</div>
+      <ul class="pricing-features">
+        <li>Complete Python source code</li>
+        <li>Google Analytics 4 integration</li>
+        <li>Branded PDF report generation</li>
+        <li>WhatsApp Cloud API delivery</li>
+        <li>Step-by-step setup guide</li>
+        <li>Handles unlimited clients</li>
+        <li>Schedule with cron (weekly, daily, etc.)</li>
+        <li>Troubleshooting documentation</li>
+      </ul>
+      <button class="btn-primary pricing-buy buy-trigger-btn">
+        Get Instant Access →
+      </button>
+      <div class="pricing-note">Instant download · ZIP file (13.4 KB) · Python 3.10+</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">❓ FAQ</div>
+      <h2>Frequently Asked Questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <button class="faq-question" aria-expanded="false">
+          <span>Do I need coding experience to use this?</span>
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">
+          No. You just need to install Python, edit a config file (YAML), and run one command. The included README walks you through every step, including screenshots for the Google and Meta setup.
+        </div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" aria-expanded="false">
+          <span>Does this work with Google Analytics 4 (GA4)?</span>
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">
+          Yes, it uses the GA4 Data API exclusively. Universal Analytics (UA) is not supported since Google has deprecated it.
+        </div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" aria-expanded="false">
+          <span>How many clients can I add?</span>
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">
+          Unlimited. Just add more entries to your <code>clients.yaml</code> file. The script handles them all sequentially — 10 clients takes about 1 minute, 30 clients around 3 minutes.
+        </div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" aria-expanded="false">
+          <span>Are there any recurring costs?</span>
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">
+          No. This is a one-time purchase. Google Analytics and WhatsApp Cloud API are free at typical agency volumes. The script runs on your own computer — no servers to pay for.
+        </div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" aria-expanded="false">
+          <span>Can I customize the PDF reports?</span>
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">
+          Yes. The reports automatically include your agency name and logo. Since you get the full Python source code, you can modify the PDF layout, add custom metrics, or change the design however you like.
+        </div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-question" aria-expanded="false">
+          <span>What operating systems are supported?</span>
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">
+          Mac, Windows, and Linux. Anything that runs Python 3.10+. It's been tested on macOS and Ubuntu, and works on Windows with minimal adjustment.
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="final-cta">
+  <div class="container reveal">
+    <h2>Stop Copy-Pasting. Start Automating.</h2>
+    <p>Save 2+ hours every Friday. Your clients get professional reports on WhatsApp — you get your time back.</p>
+    <button class="btn-primary buy-trigger-btn" style="font-size:1.1rem;padding:18px 44px;">
+      Get WhatsApp Client Reporter →
+    </button>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <p>WhatsApp Client Reporter · One-time digital download · For agency use</p>
+  </div>
+</footer>
+
+<!-- ============ UPI PAYMENT MODAL ============ -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal-content">
+    <button class="modal-close" id="modalClose" aria-label="Close modal">&times;</button>
+    <h2 class="modal-title">Secure UPI Payment</h2>
+    <p class="modal-subtitle">Pay ₹1,999 directly to bypass platform fees &amp; get instant access.</p>
+    
+    <div class="upi-id-select">
+      <button class="upi-chip active" data-upi="933658933@ybl">UPI ID 1<br><span style="font-size: 0.75rem; opacity: 0.8;">933658933@ybl</span></button>
+      <button class="upi-chip" data-upi="9250615962@ybl">UPI ID 2<br><span style="font-size: 0.75rem; opacity: 0.8;">9250615962@ybl</span></button>
+    </div>
+
+    <!-- Mobile Pay Button -->
+    <a href="" class="mobile-pay-btn" id="mobilePayBtn">Pay via UPI App</a>
+
+    <!-- QR Code Container (Desktop) -->
+    <div class="qr-container">
+      <div id="qrcode"></div>
+      <div class="qr-caption">Scan with Google Pay, PhonePe, Paytm, or BHIM</div>
+    </div>
+
+    <div class="payment-instructions">
+      <ol>
+        <li>Complete the ₹1,999 payment using the QR code or button.</li>
+        <li>Take a screenshot of the payment success screen.</li>
+        <li>Click below to send the screenshot on WhatsApp to instantly receive your ZIP download link.</li>
+      </ol>
+    </div>
+
+    <a href="" target="_blank" class="confirm-payment-btn" id="confirmPaymentBtn">
+      💬 Send Screenshot on WhatsApp
+    </a>
+  </div>
+</div>
+
+<!-- ============ SCRIPTS ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* Theme Toggle */
+(function() {
+  var toggle = document.getElementById('themeToggle');
+  var html = document.documentElement;
+  var stored = null;
+  try { stored = localStorage.getItem('theme'); } catch(e) {}
+  if (stored) html.setAttribute('data-theme', stored);
+  
+  toggle.addEventListener('click', function() {
+    var current = html.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch(e) {}
+  });
+})();
+
+/* Scroll Reveal */
+(function() {
+  var reveals = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  
+  reveals.forEach(function(el) { observer.observe(el); });
+})();
+
+/* FAQ Accordion */
+(function() {
+  var questions = document.querySelectorAll('.faq-question');
+  questions.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = this.closest('.faq-item');
+      var isOpen = item.classList.contains('open');
+      
+      /* Close all */
+      document.querySelectorAll('.faq-item.open').forEach(function(openItem) {
+        openItem.classList.remove('open');
+        openItem.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+      });
+      
+      /* Toggle clicked */
+      if (!isOpen) {
+        item.classList.add('open');
+        this.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+})();
+
+/* Smooth anchor scroll */
+document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+/* UPI Modal Logic & QR Generation */
+(function() {
+  var modal = document.getElementById('paymentModal');
+  var closeBtn = document.getElementById('modalClose');
+  var triggers = document.querySelectorAll('.buy-trigger-btn');
+  var chips = document.querySelectorAll('.upi-chip');
+  var mobileBtn = document.getElementById('mobilePayBtn');
+  var confirmBtn = document.getElementById('confirmPaymentBtn');
+  var qrcodeContainer = document.getElementById('qrcode');
+  var qrcodeObj = null;
+
+  var selectedUpi = '933658933@ybl';
+  var amount = '1999';
+  var productName = 'WhatsApp Client Reporter';
+
+  function getUpiLink(upiId) {
+    return 'upi://pay?pa=' + encodeURIComponent(upiId) + 
+           '&pn=' + encodeURIComponent(productName) + 
+           '&am=' + encodeURIComponent(amount) + 
+           '&cu=INR' + 
+           '&tn=' + encodeURIComponent(productName);
+  }
+
+  function getWhatsAppLink(upiId) {
+    var text = "Hi, I have completed the ₹1,999 payment for WhatsApp Client Reporter to " + upiId + ".\n\nHere is my payment screenshot. Please send me the download link.";
+    return 'https://wa.me/919250615962?text=' + encodeURIComponent(text);
+  }
+
+  function updatePaymentDetails() {
+    var upiLink = getUpiLink(selectedUpi);
+    var waLink = getWhatsAppLink(selectedUpi);
+
+    mobileBtn.href = upiLink;
+    confirmBtn.href = waLink;
+
+    /* Render QR Code */
+    qrcodeContainer.innerHTML = '';
+    qrcodeObj = new QRCode(qrcodeContainer, {
+      text: upiLink,
+      width: 200,
+      height: 200,
+      colorDark : "#0f172a",
+      colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.M
+    });
+  }
+
+  /* Open Modal */
+  triggers.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      modal.classList.add('open');
+      updatePaymentDetails();
+    });
+  });
+
+  /* Close Modal */
+  closeBtn.addEventListener('click', function() {
+    modal.classList.remove('open');
+  });
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      modal.classList.remove('open');
+    }
+  });
+
+  /* Handle UPI Chip Selection */
+  chips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      chips.forEach(function(c) { c.classList.remove('active'); });
+      this.classList.add('active');
+      selectedUpi = this.getAttribute('data-upi');
+      updatePaymentDetails();
+    });
+  });
+})();
+</script>
+</body>
+</html>
